@@ -246,6 +246,12 @@ class Chef
 
       def macterm(term_app="/Applications/Utilities/Terminal.app")
         require 'appscript'
+        # account for users that install in home dir
+        begin
+          Appscript.app(term_app)
+        rescue FindApp::ApplicationNotFoundError
+          term_app = "~#{term_app}"
+        end
         Appscript.app(term_app).windows.first.activate  
         Appscript.app("System Events").application_processes[term_app].keystroke("n", :using=>:command_down)
         term = Appscript.app(term_app)  
