@@ -244,16 +244,20 @@ class Chef
         exec("tmux attach-session -t knife")
       end
 
-      def macterm
+      def macterm(term_app="/Applications/Utilities/Terminal.app")
         require 'appscript'
-        Appscript.app("/Applications/Utilities/Terminal.app").windows.first.activate  
-        Appscript.app("System Events").application_processes["Terminal.app"].keystroke("n", :using=>:command_down)
-        term = Appscript.app('Terminal')  
-        window = term.windows.first.get
+        Appscript.app(term_app).windows.first.activate  
+        Appscript.app("System Events").application_processes[term_app].keystroke("n", :using=>:command_down)
+        term = Appscript.app(term_app)  
+        window =  term_app =~ /iTerm/ ? term.terminals.last.get : term.windows.first.get
         session.servers_for.each do |server|
-          Appscript.app("System Events").application_processes["Terminal.app"].keystroke("t", :using=>:command_down)
+          Appscript.app("System Events").application_processes[term_app].keystroke("t", :using=>:command_down)
           cmd = "unset PROMPT_COMMAND; echo -e \"\\033]0;#{server.host}\\007\"; ssh #{server.user ? "#{server.user}@#{server.host}" : server.host}"
-          Appscript.app('Terminal').do_script(cmd, :in => window.tabs.last.get)
+          if term_app =~ /iTerm/
+            window.sessions.last.write(:text => cmd)
+          else
+            Appscript.app(term_app).do_script(cmd, :in => window.tabs.last.get)
+          end
           sleep 1
         end
       end
@@ -273,7 +277,9 @@ class Chef
         when "tmux"
           tmux
         when "macterm"
-          macterm
+          macterm("/Applications/Utilities/Terminal.app")
+        when "maciterm"
+          macterm("/Applications/iTerm.app")
         else
           ssh_command(@name_args[1..-1].join(" "))
         end
