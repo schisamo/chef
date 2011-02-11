@@ -35,7 +35,8 @@ class Chef
         require 'net/ssh/multi'
         require 'readline'
 
-        connection = Fog::Rackspace::Compute.new(
+        connection = Fog::Compute.new(
+          :provider => 'Rackspace',
           :rackspace_api_key => Chef::Config[:knife][:rackspace_api_key],
           :rackspace_username => Chef::Config[:knife][:rackspace_api_username] 
         )

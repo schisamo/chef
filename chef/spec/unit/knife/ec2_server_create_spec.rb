@@ -53,7 +53,7 @@ describe Chef::Knife::Ec2ServerCreate do
       @ec2_servers.should_receive(:create).and_return(@new_ec2_server)
       @ec2_connection.should_receive(:servers).and_return(@ec2_servers)
 
-      Fog::AWS::Compute.should_receive(:new).and_return(@ec2_connection)
+      Fog::Compute.should_receive(:new).and_return(@ec2_connection)
 
       @knife_ec2_create.stub!(:puts)
       @knife_ec2_create.stub!(:print)
