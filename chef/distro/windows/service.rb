@@ -48,6 +48,18 @@ class Chef::Service::Windows
     :default => "chef-client",
     :description => "The description for the service."
 
+  option :config_file,
+    :short => "-c CONFIG",
+    :long  => "--config CONFIG",
+    :default => "#{ENV['SYSTEMDRIVE']}/chef/client.rb",
+    :description => "The configuration file to use"
+
+  option :log_location,
+    :short        => "-L LOGLOCATION",
+    :long         => "--logfile LOGLOCATION",
+    :description  => "Set the log file location",
+    :default => "#{ENV['SYSTEMDRIVE']}/chef/client.log",
+
   option :help,
     :short        => "-h",
     :long         => "--help",
@@ -67,7 +79,8 @@ class Chef::Service::Windows
       ruby = File.join(RbConfig::CONFIG['bindir'], 'ruby')
       path = ' "' + File.expand_path(File.join(File.dirname(__FILE__), '..', '..', 'lib', 'chef', 'daemon', 'windows.rb')) + '"'
       # ensure all forward slashes are backslashes
-      cmd = (ruby + path).gsub(File::SEPARATOR, File::ALT_SEPARATOR)
+      options = " -c #{config[:config_file]} -l #{config[:log_location]}"
+      cmd = (ruby + path + options).gsub(File::SEPARATOR, File::ALT_SEPARATOR)
 
       Service.new(
          :service_name     => config[:name],
@@ -82,7 +95,7 @@ class Chef::Service::Windows
       take_action('stop', STOPPED)
     when 'uninstall', 'delete'
 
-      if Service.status(config[:name]).current_state != STOPPED
+      if current_state != STOPPED
          Service.stop(config[:name])
       end
       wait_for_state(STOPPED)
@@ -99,7 +112,7 @@ class Chef::Service::Windows
   private
 
   def take_action(action=nil, desired_state=nil)
-    if Service.status(config[:name]).current_state != desired_state
+    if current_state != desired_state
        Service.send(action, config[:name])
        wait_for_state(action)
        puts "Service #{config[:name]} #{action}ed"
